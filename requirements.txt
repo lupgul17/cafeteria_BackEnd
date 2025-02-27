@@ -3,5 +3,5 @@ Flask-SQLAlchemy
 Flask-CORS
 pymysql
 qrcode
-Pillow
+Pillow  # Asegurar que esta línea está presente
 gunicorn
