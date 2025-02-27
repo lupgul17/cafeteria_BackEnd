@@ -62,6 +62,7 @@ def generar_qr(alumno_id):
 def registrar_consumo():
     try:
         data = request.json
+        print("📥 Datos recibidos:", data)  # 👈 Ver en logs lo que llega
 
         # Validar que los datos requeridos están en la solicitud
         required_fields = ["id_alumno", "id_paquete", "fecha"]
@@ -75,7 +76,7 @@ def registrar_consumo():
             id_paquete=data['id_paquete'],
             fecha=data['fecha']
         )
-        
+
         db.session.add(nuevo_registro)
         db.session.commit()
 
