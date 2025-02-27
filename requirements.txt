@@ -3,4 +3,5 @@ Flask-SQLAlchemy
 Flask-CORS
 pymysql
 qrcode
+Pillow
 gunicorn
