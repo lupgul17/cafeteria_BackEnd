@@ -4,6 +4,7 @@ from flask_cors import CORS
 import qrcode
 from io import BytesIO
 import os
+from datetime import date
 
 app = Flask(__name__)
 CORS(app)  # Habilita comunicación con el frontend
@@ -58,37 +59,47 @@ def generar_qr(alumno_id):
     return send_file(buffer, mimetype='image/png')
 
 # 📺 REGISTRAR CONSUMO
+from datetime import date  # 👈 Importar date para manejar fechas
+
 @app.route('/registrar_consumo', methods=['POST'])
 def registrar_consumo():
     try:
         data = request.json
-        print("📥 Datos recibidos:", data)  # 👀 Ver en logs
+        print("📥 Datos recibidos:", data)
 
         # Validar que los datos requeridos están en la solicitud
         required_fields = ["id_alumno", "id_paquete", "fecha"]
         for field in required_fields:
-            if field not in data or not isinstance(data[field], (int, str)):  # Asegurar que no sean objetos
+            if field not in data or not isinstance(data[field], (int, str)):
                 return jsonify({"error": f"Falta el campo requerido o es inválido: {field}"}), 400
 
-        # Convertir a entero (por si viene como string)
+        # Convertir a enteros para asegurarnos de que son números
         id_alumno = int(data["id_alumno"])
         id_paquete = int(data["id_paquete"])
+        fecha_actual = data["fecha"]
 
-        # Verificar si el alumno existe
+        # Verificar si el alumno ya tiene un registro de consumo en la fecha actual
+        consumo_existente = RegistroConsumo.query.filter_by(
+            id_alumno=id_alumno, fecha=fecha_actual
+        ).first()
+
+        if consumo_existente:
+            return jsonify({"error": "⚠️ Ya existe un registro de consumo para este alumno hoy."}), 409  # 409: Conflict
+
+        # Verificar si el alumno y el paquete existen
         alumno = Alumno.query.get(id_alumno)
-        if not alumno:
-            return jsonify({"error": "El alumno no existe"}), 404
-
-        # Verificar si el paquete existe
         paquete = Paquete.query.get(id_paquete)
+
+        if not alumno:
+            return jsonify({"error": "❌ El alumno no existe"}), 404
         if not paquete:
-            return jsonify({"error": "El paquete no existe"}), 404
+            return jsonify({"error": "❌ El paquete no existe"}), 404
 
         # Crear nuevo registro de consumo
         nuevo_registro = RegistroConsumo(
             id_alumno=id_alumno,
             id_paquete=id_paquete,
-            fecha=data['fecha']
+            fecha=fecha_actual
         )
 
         db.session.add(nuevo_registro)
