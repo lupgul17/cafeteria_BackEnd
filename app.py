@@ -60,15 +60,32 @@ def generar_qr(alumno_id):
 # 📺 REGISTRAR CONSUMO
 @app.route('/registrar_consumo', methods=['POST'])
 def registrar_consumo():
-    data = request.json
-    nuevo_registro = RegistroConsumo(
-        id_alumno=data['id_alumno'],
-        id_paquete=data['id_paquete'],
-        fecha=data['fecha']
-    )
-    db.session.add(nuevo_registro)
-    db.session.commit()
-    return jsonify({"mensaje": "Consumo registrado con éxito"})
+    try:
+        data = request.json
+
+        # Validar que los datos requeridos están en la solicitud
+        required_fields = ["id_alumno", "id_paquete", "fecha"]
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"error": f"Falta el campo requerido: {field}"}), 400
+
+        # Crear nuevo registro de consumo
+        nuevo_registro = RegistroConsumo(
+            id_alumno=data['id_alumno'],
+            id_paquete=data['id_paquete'],
+            fecha=data['fecha']
+        )
+        
+        db.session.add(nuevo_registro)
+        db.session.commit()
+
+        return jsonify({"mensaje": "✅ Consumo registrado con éxito"}), 201
+
+    except Exception as e:
+        db.session.rollback()  # Deshacer cambios si hay error
+        print(f"❌ Error al registrar consumo: {e}")
+        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
+
 
 # 📺 OBTENER TODOS LOS ALUMNOS
 @app.route('/alumnos', methods=['GET'])
