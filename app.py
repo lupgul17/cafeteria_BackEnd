@@ -62,18 +62,32 @@ def generar_qr(alumno_id):
 def registrar_consumo():
     try:
         data = request.json
-        print("📥 Datos recibidos:", data)  # 👈 Ver en logs lo que llega
+        print("📥 Datos recibidos:", data)  # 👀 Ver en logs
 
         # Validar que los datos requeridos están en la solicitud
         required_fields = ["id_alumno", "id_paquete", "fecha"]
         for field in required_fields:
-            if field not in data:
-                return jsonify({"error": f"Falta el campo requerido: {field}"}), 400
+            if field not in data or not isinstance(data[field], (int, str)):  # Asegurar que no sean objetos
+                return jsonify({"error": f"Falta el campo requerido o es inválido: {field}"}), 400
+
+        # Convertir a entero (por si viene como string)
+        id_alumno = int(data["id_alumno"])
+        id_paquete = int(data["id_paquete"])
+
+        # Verificar si el alumno existe
+        alumno = Alumno.query.get(id_alumno)
+        if not alumno:
+            return jsonify({"error": "El alumno no existe"}), 404
+
+        # Verificar si el paquete existe
+        paquete = Paquete.query.get(id_paquete)
+        if not paquete:
+            return jsonify({"error": "El paquete no existe"}), 404
 
         # Crear nuevo registro de consumo
         nuevo_registro = RegistroConsumo(
-            id_alumno=data['id_alumno'],
-            id_paquete=data['id_paquete'],
+            id_alumno=id_alumno,
+            id_paquete=id_paquete,
             fecha=data['fecha']
         )
 
@@ -83,10 +97,9 @@ def registrar_consumo():
         return jsonify({"mensaje": "✅ Consumo registrado con éxito"}), 201
 
     except Exception as e:
-        db.session.rollback()  # Deshacer cambios si hay error
+        db.session.rollback()
         print(f"❌ Error al registrar consumo: {e}")
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
-
 
 # 📺 OBTENER TODOS LOS ALUMNOS
 @app.route('/alumnos', methods=['GET'])
