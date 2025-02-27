@@ -84,6 +84,18 @@ def obtener_pagos():
         { "id": p.id_pago, "monto": str(p.monto), "fecha": p.fecha.strftime('%Y-%m-%d'), "alumno": p.id_alumno }
         for p in pagos
     ])
+@app.route('/alumnos/<int:id_alumno>', methods=['GET'])
+def obtener_alumno(id_alumno):
+    alumno = Alumno.query.get(id_alumno)
+    if alumno:
+        return jsonify({
+            "id": alumno.id_alumno,
+            "nombre": alumno.nombre,
+            "apellido": alumno.apellido,
+            "grado": alumno.grado
+        })
+    return jsonify({"error": "Alumno no encontrado"}), 404
+
 
 if __name__ == '__main__':
     with app.app_context():
